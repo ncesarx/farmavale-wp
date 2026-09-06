@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole { OWNER ADMIN SUPERVISOR AGENT ANALYST }
+enum UserStatus { INVITED ACTIVE SUSPENDED }
+enum AgentStatus { OFFLINE AVAILABLE BUSY AWAY }
+enum ConversationStatus { QUEUED OPEN PENDING RESOLVED CLOSED }
+enum ConversationPriority { LOW NORMAL HIGH URGENT }
+enum MessageDirection { INBOUND OUTBOUND INTERNAL }
+enum MessageStatus { RECEIVED QUEUED SENT DELIVERED READ FAILED }
+enum ChannelType { WHATSAPP EMAIL PHONE API }
+enum AssignmentReason { AUTO MANUAL TRANSFER REOPEN }
+enum IntegrationStatus { DISCONNECTED CONNECTED DEGRADED ERROR }
+
+model Organization {
+  id           String         @id @default(cuid())
+  name         String
+  slug         String         @unique
+  timezone     String         @default("America/Sao_Paulo")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  users        User[]
+  contacts     Contact[]
+  channels     Channel[]
+  conversations Conversation[]
+  tags         Tag[]
+  integrations Integration[]
+  auditLogs    AuditLog[]
+}
+
+model User {
+  id           String       @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name         String
+  email        String
+  passwordHash String?
+  role         UserRole     @default(AGENT)
+  status       UserStatus   @default(INVITED)
+  agentStatus  AgentStatus  @default(OFFLINE)
+  maxOpenConversations Int   @default(5)
+  lastSeenAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  sessions     Session[]
+  assignments  ConversationAssignment[]
+  assignedConversations Conversation[] @relation("AssignedAgent")
+  sentMessages Message[]    @relation("MessageSender")
+  auditLogs    AuditLog[]   @relation("AuditActor")
+  @@unique([organizationId, email])
+  @@index([organizationId, agentStatus])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, expiresAt])
+}
+
+model Contact {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  phoneE164      String
+  email          String?
+  externalCrmId  String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  conversations  Conversation[]
+  tags           ContactTag[]
+  @@unique([organizationId, phoneE164])
+  @@index([organizationId, name])
+  @@index([organizationId, externalCrmId])
+}
+
+model Channel {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type           ChannelType
+  name           String
+  externalId     String
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  conversations  Conversation[]
+  @@unique([organizationId, type, externalId])
+}
+
+model Conversation {
+  id             String               @id @default(cuid())
+  organizationId String
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contactId      String
+  contact        Contact              @relation(fields: [contactId], references: [id])
+  channelId      String
+  channel        Channel              @relation(fields: [channelId], references: [id])
+  assignedAgentId String?
+  assignedAgent  User?                @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  status         ConversationStatus   @default(QUEUED)
+  priority       ConversationPriority @default(NORMAL)
+  category       String?
+  protocol       String               @unique
+  firstResponseAt DateTime?
+  lastMessageAt  DateTime?
+  resolvedAt     DateTime?
+  slaDueAt       DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  messages       Message[]
+  assignments    ConversationAssignment[]
+  tags           ConversationTag[]
+  @@index([organizationId, status, priority])
+  @@index([organizationId, assignedAgentId, status])
+  @@index([organizationId, lastMessageAt])
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String?
+  sender         User?            @relation("MessageSender", fields: [senderId], references: [id])
+  externalId     String?          @unique
+  direction      MessageDirection
+  status         MessageStatus
+  body           String?
+  mediaType      String?
+  mediaUrl       String?
+  rawPayload     Json?
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+  @@index([conversationId, createdAt])
+}
+
+model ConversationAssignment {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          User             @relation(fields: [agentId], references: [id])
+  reason         AssignmentReason
+  assignedAt     DateTime         @default(now())
+  endedAt        DateTime?
+  @@index([agentId, endedAt])
+}
+
+model Tag {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  color          String
+  createdAt      DateTime     @default(now())
+  conversationTags ConversationTag[]
+  contactTags    ContactTag[]
+  @@unique([organizationId, name])
+}
+
+model ConversationTag {
+  conversationId String
+  tagId          String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tag            Tag          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([conversationId, tagId])
+}
+
+model ContactTag {
+  contactId String
+  tagId     String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([contactId, tagId])
+}
+
+model Integration {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       String
+  status         IntegrationStatus @default(DISCONNECTED)
+  externalAccountId String?
+  config         Json?
+  lastSyncAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  @@unique([organizationId, provider])
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorId        String?
+  actor          User?         @relation("AuditActor", fields: [actorId], references: [id])
+  action         String
+  entityType     String
+  entityId       String?
+  ipAddress      String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+}
