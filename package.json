@@ -13,16 +13,19 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.2",
     "jose": "^6.1.0",
     "next": "^16.3.3",
+    "pg": "^8.16.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.15.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.0.0",
