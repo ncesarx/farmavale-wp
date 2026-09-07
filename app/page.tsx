@@ -1,3 +1,7 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { LogoutButton } from "@/components/LogoutButton";
+
 const metrics = [
   ["Em atendimento", "18", "+12% hoje"],
   ["Aguardando", "07", "3 acima de 5 min"],
@@ -12,7 +16,10 @@ const conversations = [
   ["EX", "Exemplo Atendimento", "Solicitação de alteração cadastral", "09:32", "Normal"],
 ];
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   return (
     <main className="shell">
       <aside className="sidebar">
@@ -25,7 +32,7 @@ export default function Home() {
         <div className="connection"><i /> WhatsApp aguardando configuração<small>Número de teste Meta</small></div>
       </aside>
       <section className="content">
-        <header><div><small>CENTRAL DE ATENDIMENTO</small><h1>Atendimentos</h1></div><div className="live"><i /> Operação ao vivo</div><button>+ Novo atendimento</button></header>
+        <header><div><small>CENTRAL DE ATENDIMENTO</small><h1>Atendimentos</h1></div><div className="live"><i /> {user.name} · {user.role}</div><button>+ Novo atendimento</button><LogoutButton /></header>
         <div className="metrics">{metrics.map(m=><article key={m[0]}><span>{m[0]}</span><strong>{m[1]}</strong><small className="green">{m[2]}</small></article>)}</div>
         <div className="workspace">
           <section className="queue">
