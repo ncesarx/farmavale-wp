@@ -7,16 +7,77 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole { OWNER ADMIN SUPERVISOR AGENT ANALYST }
-enum UserStatus { INVITED ACTIVE SUSPENDED }
-enum AgentStatus { OFFLINE AVAILABLE BUSY AWAY }
-enum ConversationStatus { QUEUED OPEN PENDING RESOLVED CLOSED }
-enum ConversationPriority { LOW NORMAL HIGH URGENT }
-enum MessageDirection { INBOUND OUTBOUND INTERNAL }
-enum MessageStatus { RECEIVED QUEUED SENT DELIVERED READ FAILED }
-enum ChannelType { WHATSAPP EMAIL PHONE API }
-enum AssignmentReason { AUTO MANUAL TRANSFER REOPEN }
-enum IntegrationStatus { DISCONNECTED CONNECTED DEGRADED ERROR }
+enum UserRole {
+  OWNER
+  ADMIN
+  SUPERVISOR
+  AGENT
+  ANALYST
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+enum AgentStatus {
+  OFFLINE
+  AVAILABLE
+  BUSY
+  AWAY
+}
+
+enum ConversationStatus {
+  QUEUED
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum ConversationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+  INTERNAL
+}
+
+enum MessageStatus {
+  RECEIVED
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum ChannelType {
+  WHATSAPP
+  EMAIL
+  PHONE
+  API
+}
+
+enum AssignmentReason {
+  AUTO
+  MANUAL
+  TRANSFER
+  REOPEN
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  CONNECTED
+  DEGRADED
+  ERROR
+}
 
 model Organization {
   id           String         @id @default(cuid())
