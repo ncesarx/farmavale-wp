@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { autoAssignConversation } from "@/lib/conversation-assignment";
 import { prisma } from "@/lib/prisma";
 import {
   MetaInboundMessage,
@@ -14,6 +15,8 @@ export type MetaProcessingResult = {
   created: number;
   duplicates: number;
   statusUpdates: number;
+  autoAssigned: number;
+  leftQueued: number;
 };
 
 function phoneE164(value: string) {
@@ -48,7 +51,9 @@ async function persistInbound(message: MetaInboundMessage) {
         where: { externalId: message.id },
         select: { id: true },
       });
-      if (existing) return "duplicate" as const;
+      if (existing) {
+        return { outcome: "duplicate", assignment: null } as const;
+      }
 
       const organization = await tx.organization.findUnique({
         where: { slug: ORGANIZATION_SLUG },
@@ -168,10 +173,18 @@ async function persistInbound(message: MetaInboundMessage) {
         },
       });
 
-      return "created" as const;
+      const assignment = await autoAssignConversation(
+        tx,
+        organization.id,
+        conversation.id,
+      );
+
+      return { outcome: "created", assignment } as const;
     });
   } catch (error) {
-    if (isUniqueViolation(error)) return "duplicate" as const;
+    if (isUniqueViolation(error)) {
+      return { outcome: "duplicate", assignment: null } as const;
+    }
     throw error;
   }
 }
@@ -211,11 +224,15 @@ export async function processMetaWebhook(payload: unknown): Promise<MetaProcessi
     created: 0,
     duplicates: 0,
     statusUpdates: 0,
+    autoAssigned: 0,
+    leftQueued: 0,
   };
 
   for (const message of events.messages) {
-    const outcome = await persistInbound(message);
-    result[outcome === "created" ? "created" : "duplicates"] += 1;
+    const persisted = await persistInbound(message);
+    result[persisted.outcome === "created" ? "created" : "duplicates"] += 1;
+    if (persisted.assignment === "assigned") result.autoAssigned += 1;
+    if (persisted.assignment === "queued") result.leftQueued += 1;
   }
 
   for (const status of events.statuses) {
