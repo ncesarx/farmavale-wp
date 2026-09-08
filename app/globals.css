@@ -45,3 +45,5 @@
 .bubble time{display:block;margin-top:5px;text-align:right;color:#AAA3BC;font-size:7px}
 .composer textarea:disabled,.composer button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:720px){.presenceWrap{margin-left:auto}.content>header .live{display:none}.presence select{width:92px}.presenceError{right:-40px}}
+
+.conversation{text-decoration:none;color:inherit;cursor:pointer}
