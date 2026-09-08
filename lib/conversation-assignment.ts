@@ -29,8 +29,9 @@ export async function autoAssignConversation(
   organizationId: string,
   conversationId: string,
 ): Promise<AutoAssignmentResult> {
-  await tx.$queryRaw`
-    SELECT pg_advisory_xact_lock(hashtext(${organizationId}))
+  await tx.$queryRaw<Array<{ locked: boolean }>>`
+    SELECT TRUE AS locked
+    FROM pg_advisory_xact_lock(hashtext(${organizationId}))
   `;
 
   const conversation = await tx.conversation.findUnique({
