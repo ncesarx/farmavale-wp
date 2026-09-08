@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PresenceControl } from "@/components/PresenceControl";
@@ -42,7 +43,12 @@ function maskedPhone(phone: string) {
   return digits.length > 4 ? `•••••• ${digits.slice(-4)}` : "Não informado";
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ conversation?: string }>;
+}) {
+  const params = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -94,7 +100,10 @@ export default async function Home() {
       }),
     ]);
 
-  const selected = conversations[0] ?? null;
+  const selected =
+    conversations.find((conversation) => conversation.id === params.conversation) ??
+    conversations[0] ??
+    null;
   const selectedMessages = selected
     ? (
         await prisma.message.findMany({
@@ -185,8 +194,9 @@ export default async function Home() {
                     ? `[${conversation.messages[0].mediaType}]`
                     : "Conversa sem mensagens");
                 return (
-                  <article
-                    className={index === 0 ? "conversation selected" : "conversation"}
+                  <Link
+                    href={`/?conversation=${conversation.id}`}
+                    className={selected?.id === conversation.id ? "conversation selected" : "conversation"}
                     key={conversation.id}
                   >
                     <div className="avatar">{initials(conversation.contact.name)}</div>
@@ -198,7 +208,7 @@ export default async function Home() {
                       </small>
                     </div>
                     <time>{formatTime(conversation.lastMessageAt)}</time>
-                  </article>
+                  </Link>
                 );
               })}
               {!conversations.length ? (
