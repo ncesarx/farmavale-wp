@@ -8,7 +8,7 @@ const schema = z.object({
   META_ACCESS_TOKEN: z.string().optional(),
   META_PHONE_NUMBER_ID: z.string().optional(),
   META_APP_SECRET: z.string().min(1),
-  META_GRAPH_API_VERSION: z.string().default("v23.0"),
+  META_GRAPH_API_VERSION: z.string().default("v26.0"),
 });
 
 export function getEnv() {
