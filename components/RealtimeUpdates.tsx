@@ -18,12 +18,13 @@ export function RealtimeUpdates() {
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [connected, setConnected] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
-    "unsupported",
+    () =>
+      typeof window !== "undefined" && "Notification" in window
+        ? Notification.permission
+        : "unsupported",
   );
 
   useEffect(() => {
-    setPermission("Notification" in window ? Notification.permission : "unsupported");
-
     const source = new EventSource("/api/events");
     source.onopen = () => setConnected(true);
     source.onerror = () => setConnected(false);
