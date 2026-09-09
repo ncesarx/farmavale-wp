@@ -25,3 +25,25 @@
 .loginCard footer i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px}
 .logoutButton{background:transparent!important;border:1px solid var(--border)!important;color:#AFA9BF!important}
 @media(max-width:760px){.loginPage{grid-template-columns:1fr}.loginBrand{display:none}.loginCard{min-height:100vh;padding:18px}.loginCard>div{padding:28px 22px}}
+
+
+/* Painel operacional */
+.presenceWrap{position:relative;margin-left:auto;margin-right:10px}
+.presence{height:34px;display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:18px;padding:0 9px;background:#131122}
+.presence i{width:7px;height:7px;border-radius:50%;background:#777}
+.presence select{appearance:none;border:0;outline:0;background:transparent;color:#D9D5E4;font:700 10px var(--font-nunito);padding:0 14px 0 2px;cursor:pointer}
+.presence select:disabled{cursor:wait;opacity:.65}.presence select option{background:#17152A;color:#fff}
+.presence-available i{background:var(--green);box-shadow:0 0 0 3px rgba(0,168,89,.12)}
+.presence-busy i{background:#FF5E7D}.presence-away i{background:var(--gold)}.presence-offline i{background:#777287}
+.presenceError{position:absolute;right:0;top:39px;width:190px;padding:7px;background:#311727;color:#FF91A6;border-radius:6px;z-index:5}
+.connection.connected i{background:var(--green)}
+.conversationList{height:calc(100% - 112px);overflow:auto}
+.emptyState,.emptyChat{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted)}
+.emptyState{padding:45px 25px;gap:7px}.emptyState strong{color:#DCD8E6;font:600 14px var(--font-outfit)}.emptyState span{font-size:10px}
+.emptyChat{height:100%;padding:40px}.emptyChat h2{font:600 21px var(--font-outfit);color:#EEEAF5;margin:14px 0 6px}.emptyChat p{max-width:350px;line-height:1.6}
+.brandEmpty{width:52px;height:52px;display:grid;place-items:center;border-radius:15px;background:var(--gold);color:var(--purple);font-size:24px}
+.bubble time{display:block;margin-top:5px;text-align:right;color:#AAA3BC;font-size:7px}
+.composer textarea:disabled,.composer button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:720px){.presenceWrap{margin-left:auto}.content>header .live{display:none}.presence select{width:92px}.presenceError{right:-40px}}
+
+.conversation{text-decoration:none;color:inherit;cursor:pointer}

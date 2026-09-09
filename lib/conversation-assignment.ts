@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export type AssignmentCandidate = {
   id: string;
@@ -24,16 +25,21 @@ export function selectAssignmentCandidate(candidates: AssignmentCandidate[]) {
 
 export type AutoAssignmentResult = "assigned" | "already_assigned" | "queued";
 
-export async function autoAssignConversation(
+async function acquireAssignmentLock(
   tx: Prisma.TransactionClient,
   organizationId: string,
-  conversationId: string,
-): Promise<AutoAssignmentResult> {
+) {
   await tx.$queryRaw<Array<{ locked: boolean }>>`
     SELECT TRUE AS locked
     FROM pg_advisory_xact_lock(hashtext(${organizationId}))
   `;
+}
 
+async function assignConversationWithLock(
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  conversationId: string,
+): Promise<AutoAssignmentResult> {
   const conversation = await tx.conversation.findUnique({
     where: { id: conversationId },
     select: { assignedAgentId: true },
@@ -108,4 +114,49 @@ export async function autoAssignConversation(
   });
 
   return "assigned";
+}
+
+export async function autoAssignConversation(
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  conversationId: string,
+): Promise<AutoAssignmentResult> {
+  await acquireAssignmentLock(tx, organizationId);
+  return assignConversationWithLock(tx, organizationId, conversationId);
+}
+
+export async function drainQueuedConversations(
+  organizationId: string,
+  limit = 50,
+) {
+  let assigned = 0;
+
+  for (let attempt = 0; attempt < limit; attempt += 1) {
+    const outcome = await prisma.$transaction(async (tx) => {
+      await acquireAssignmentLock(tx, organizationId);
+
+      const conversation = await tx.conversation.findFirst({
+        where: {
+          organizationId,
+          assignedAgentId: null,
+          status: "QUEUED",
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: { id: true },
+      });
+
+      if (!conversation) return "empty" as const;
+      return assignConversationWithLock(tx, organizationId, conversation.id);
+    });
+
+    if (outcome === "assigned") {
+      assigned += 1;
+      continue;
+    }
+
+    if (outcome === "already_assigned") continue;
+    break;
+  }
+
+  return assigned;
 }
