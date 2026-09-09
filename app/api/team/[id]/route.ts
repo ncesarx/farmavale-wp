@@ -17,7 +17,7 @@ const updateSchema = z
     role: z
       .enum(["OWNER", "ADMIN", "SUPERVISOR", "AGENT", "ANALYST"])
       .optional(),
-    status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+    status: z.enum(["INVITED", "ACTIVE", "SUSPENDED"]).optional(),
     maxOpenConversations: z.number().int().min(0).max(100).optional(),
   })
   .refine((value) => Object.keys(value).length > 0);
