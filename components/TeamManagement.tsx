@@ -4,7 +4,7 @@ import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 type Role = "OWNER" | "ADMIN" | "SUPERVISOR" | "AGENT" | "ANALYST";
-type UserStatus = "ACTIVE" | "SUSPENDED";
+type UserStatus = "INVITED" | "ACTIVE" | "SUSPENDED";
 type AgentStatus = "OFFLINE" | "AVAILABLE" | "BUSY" | "AWAY";
 
 type TeamUser = {
@@ -110,6 +110,7 @@ function UserEditor({
       </label>
       <label>Acesso
         <select value={status} disabled={pending || isSelf || cannotManageOwner} onChange={(event) => setStatus(event.target.value as UserStatus)}>
+          <option value="INVITED">Convidado</option>
           <option value="ACTIVE">Ativo</option>
           <option value="SUSPENDED">Suspenso</option>
         </select>
@@ -142,7 +143,8 @@ export function TeamManagement({
     event.preventDefault();
     setCreating(true);
     setFeedback("");
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const response = await fetch("/api/team", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -162,7 +164,7 @@ export function TeamManagement({
       setCreating(false);
       return;
     }
-    event.currentTarget.reset();
+    formElement.reset();
     setFeedback("Usuário criado. Ele já pode acessar a Central.");
     setCreating(false);
     router.refresh();
