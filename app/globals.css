@@ -78,3 +78,14 @@
 .content>header .presenceWrap{margin-left:0}
 @media(max-width:1100px){.realtimeStatus>span,.realtimeStatus small{display:none}}
 @media(max-width:820px){.realtimeStatus{display:none}.content>header .presenceWrap{margin-left:auto}}
+
+
+/* Envio de mensagens */
+.composer>div{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+.composer textarea{min-height:48px;max-height:120px}
+.composer button{align-self:flex-start;min-width:86px;margin-top:0}
+.composer small{min-height:12px;color:var(--muted);font-size:8px}
+.composer .composerOk{color:#35D181}.composer .composerError{color:#FF8097}
+.bubble.failed{background:#3A1B2B;border:1px solid rgba(255,94,125,.35)}
+.deliveryStatus{display:block;margin-top:5px;color:#C9C3D5;font-size:7px}
+.bubble.failed .deliveryStatus{color:#FF8097}
