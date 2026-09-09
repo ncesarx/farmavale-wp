@@ -43,7 +43,7 @@ export default async function TeamPage() {
         <div className="brand"><span>♥</span><div><strong>farmavale</strong><small>CENTRAL</small></div></div>
         <nav>
           <Link href="/">▣ <span>Atendimentos</span></Link>
-          <a>◫ <span>Visão geral</span></a>
+          <Link href="/overview">◫ <span>Visão geral</span></Link>
           <a>◎ <span>Clientes</span></a>
           <a>▤ <span>Relatórios</span></a>
           <p>GESTÃO</p>
