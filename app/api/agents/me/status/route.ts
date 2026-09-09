@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { drainQueuedConversations } from "@/lib/conversation-assignment";
 import { hasTrustedOrigin } from "@/lib/http-security";
 import { prisma } from "@/lib/prisma";
+import { publishRealtimeEvent } from "@/lib/realtime";
 
 const bodySchema = z.object({
   status: z.enum(["AVAILABLE", "BUSY", "AWAY", "OFFLINE"]),
@@ -56,6 +57,11 @@ export async function POST(request: NextRequest) {
     updated.agentStatus === "AVAILABLE"
       ? await drainQueuedConversations(user.organizationId)
       : 0;
+
+  publishRealtimeEvent({
+    organizationSlug: user.organization.slug,
+    type: assignedFromQueue > 0 ? "conversation.assigned" : "inbox.changed",
+  });
 
   return NextResponse.json({
     status: updated.agentStatus,
