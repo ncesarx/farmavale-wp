@@ -6,12 +6,12 @@ export function canManageTeam(role: ManageableRole) {
 
 export function canManageTarget(
   actorRole: ManageableRole,
-  actorId: string,
+  _actorId: string,
   target: { id: string; role: ManageableRole },
 ) {
   if (!canManageTeam(actorRole)) return false;
   if (actorRole === "ADMIN" && target.role === "OWNER") return false;
-  return actorId !== target.id || actorRole === "OWNER";
+  return true;
 }
 
 export function canAssignRole(
