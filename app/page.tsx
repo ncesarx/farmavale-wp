@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
+import { MessageComposer } from "@/components/MessageComposer";
 import { PresenceControl } from "@/components/PresenceControl";
 import { RealtimeUpdates } from "@/components/RealtimeUpdates";
 import { TicketControls } from "@/components/TicketControls";
@@ -173,6 +174,7 @@ export default async function Home({
             direction: true,
             body: true,
             mediaType: true,
+            status: true,
             createdAt: true,
           },
         })
@@ -330,22 +332,35 @@ export default async function Home({
                   </div>
                   {selectedMessages.map((message) => (
                     <div
-                      className={message.direction === "OUTBOUND" ? "bubble out" : "bubble in"}
+                      className={[
+                        message.direction === "OUTBOUND" ? "bubble out" : "bubble in",
+                        message.status === "FAILED" ? "failed" : "",
+                      ].join(" ")}
                       key={message.id}
                     >
                       {message.body ?? (message.mediaType ? `[${message.mediaType}]` : "[mensagem]")}
+                      {message.direction === "OUTBOUND" ? (
+                        <small className="deliveryStatus">
+                          {message.status === "FAILED" ? "Falha no envio" : message.status === "READ" ? "Lida" : message.status === "DELIVERED" ? "Entregue" : "Enviada"}
+                        </small>
+                      ) : null}
                       <time>{formatTime(message.createdAt)}</time>
                     </div>
                   ))}
                 </div>
-                <form className="composer">
-                  <textarea
-                    aria-label="Mensagem"
-                    placeholder="Envio será habilitado com o número comercial"
-                    disabled
-                  />
-                  <button type="button" disabled>Enviar ➤</button>
-                </form>
+                <MessageComposer
+                  conversationId={selected.id}
+                  canSend={
+                    ["OPEN", "PENDING"].includes(selected.status) &&
+                    (selected.assignedAgentId === user.id ||
+                      ["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role))
+                  }
+                  disabledReason={
+                    ["OPEN", "PENDING"].includes(selected.status)
+                      ? "Atendimento atribuído a outro agente"
+                      : "Abra ou reabra o atendimento para responder"
+                  }
+                />
               </>
             ) : (
               <div className="emptyChat">
