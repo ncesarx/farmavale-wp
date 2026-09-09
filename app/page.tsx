@@ -202,7 +202,11 @@ export default async function Home({
           <a>▤ <span>Relatórios</span></a>
           <p>GESTÃO</p>
           <a>⌁ <span>Integrações</span></a>
-          <a>◇ <span>Equipe e acesso</span></a>
+          {["OWNER", "ADMIN"].includes(user.role) ? (
+            <Link href="/team">◇ <span>Equipe e acesso</span></Link>
+          ) : (
+            <a>◇ <span>Equipe e acesso</span></a>
+          )}
         </nav>
         <div className={channel ? "connection connected" : "connection"}>
           <i /> {channel ? "WhatsApp conectado" : "WhatsApp não configurado"}
