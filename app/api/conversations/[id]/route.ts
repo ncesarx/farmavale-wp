@@ -51,7 +51,7 @@ export async function PATCH(
   if (parsed.data.tagIds) {
     const validTags = await prisma.tag.count({
       where: {
-        organizationIÓNId: user.organizationId,
+        organizationId: user.organizationId,
         id: { in: requestedTagIds },
       },
     });
