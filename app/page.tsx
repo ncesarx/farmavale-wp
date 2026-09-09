@@ -1,7 +1,9 @@
+import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PresenceControl } from "@/components/PresenceControl";
+import { TicketControls } from "@/components/TicketControls";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -19,6 +21,15 @@ const PRIORITY_LABEL = {
   HIGH: "Alta",
   URGENT: "Urgente",
 } as const;
+
+type SearchParams = {
+  conversation?: string;
+  q?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+  scope?: string;
+};
 
 function initials(name: string) {
   return name
@@ -43,10 +54,19 @@ function maskedPhone(phone: string) {
   return digits.length > 4 ? `•••••• ${digits.slice(-4)}` : "Não informado";
 }
 
+function filterHref(params: SearchParams, changes: Record<string, string | undefined>) {
+  const next = new URLSearchParams();
+  for (const [key, value] of Object.entries({ ...params, conversation: undefined, ...changes })) {
+    if (value) next.set(key, value);
+  }
+  const query = next.toString();
+  return query ? `/?${query}` : "/";
+}
+
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ conversation?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
   const user = await getCurrentUser();
@@ -57,48 +77,85 @@ export default async function Home({
   monthStart.setUTCHours(0, 0, 0, 0);
 
   const organizationId = user.organizationId;
-  const [openCount, queuedCount, mineCount, resolvedMonth, channel, conversations] =
-    await Promise.all([
-      prisma.conversation.count({
-        where: { organizationId, status: "OPEN" },
-      }),
-      prisma.conversation.count({
-        where: { organizationId, status: "QUEUED" },
-      }),
-      prisma.conversation.count({
-        where: {
-          organizationId,
-          assignedAgentId: user.id,
-          status: { in: ["OPEN", "PENDING"] },
+  const where: Prisma.ConversationWhereInput = { organizationId };
+  const query = params.q?.trim().slice(0, 80);
+
+  if (params.status && params.status in STATUS_LABEL) {
+    where.status = params.status as keyof typeof STATUS_LABEL;
+  }
+  if (params.priority && params.priority in PRIORITY_LABEL) {
+    where.priority = params.priority as keyof typeof PRIORITY_LABEL;
+  }
+  if (params.category?.trim()) {
+    where.category = { contains: params.category.trim().slice(0, 80), mode: "insensitive" };
+  }
+  if (params.scope === "mine") {
+    where.assignedAgentId = user.id;
+  } else if (params.scope === "queue") {
+    where.status = "QUEUED";
+    where.assignedAgentId = null;
+  }
+  if (query) {
+    const phoneQuery = query.replace(/\D/g, "");
+    where.OR = [
+      { protocol: { contains: query, mode: "insensitive" } },
+      { contact: { name: { contains: query, mode: "insensitive" } } },
+      ...(phoneQuery
+        ? [{ contact: { phoneE164: { contains: phoneQuery } } } satisfies Prisma.ConversationWhereInput]
+        : []),
+    ];
+  }
+
+  const [
+    openCount,
+    queuedCount,
+    mineCount,
+    resolvedMonth,
+    channel,
+    conversations,
+    availableTags,
+  ] = await Promise.all([
+    prisma.conversation.count({ where: { organizationId, status: "OPEN" } }),
+    prisma.conversation.count({ where: { organizationId, status: "QUEUED" } }),
+    prisma.conversation.count({
+      where: {
+        organizationId,
+        assignedAgentId: user.id,
+        status: { in: ["OPEN", "PENDING"] },
+      },
+    }),
+    prisma.conversation.count({
+      where: {
+        organizationId,
+        status: { in: ["RESOLVED", "CLOSED"] },
+        resolvedAt: { gte: monthStart },
+      },
+    }),
+    prisma.channel.findFirst({
+      where: { organizationId, type: "WHATSAPP", isActive: true },
+      select: { name: true },
+    }),
+    prisma.conversation.findMany({
+      where,
+      orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
+      take: 40,
+      include: {
+        contact: true,
+        assignedAgent: { select: { name: true } },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { body: true, mediaType: true },
         },
-      }),
-      prisma.conversation.count({
-        where: {
-          organizationId,
-          status: { in: ["RESOLVED", "CLOSED"] },
-          resolvedAt: { gte: monthStart },
-        },
-      }),
-      prisma.channel.findFirst({
-        where: { organizationId, type: "WHATSAPP", isActive: true },
-        select: { name: true },
-      }),
-      prisma.conversation.findMany({
-        where: { organizationId },
-        orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
-        take: 40,
-        include: {
-          contact: true,
-          assignedAgent: { select: { name: true } },
-          messages: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-            select: { body: true, mediaType: true },
-          },
-          tags: { include: { tag: true } },
-        },
-      }),
-    ]);
+        tags: { include: { tag: true } },
+      },
+    }),
+    prisma.tag.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, color: true },
+    }),
+  ]);
 
   const selected =
     conversations.find((conversation) => conversation.id === params.conversation) ??
@@ -177,13 +234,47 @@ export default async function Home({
           <section className="queue">
             <div className="sectionTitle">
               <h2>Conversas <small>{conversations.length}</small></h2>
-              <button type="button">Filtros</button>
+              <Link className="clearFilters" href="/">Limpar</Link>
             </div>
-            <input aria-label="Buscar conversas" placeholder="Buscar cliente, telefone ou protocolo" />
+            <form className="queueFilters" method="get">
+              <input
+                name="q"
+                defaultValue={params.q}
+                aria-label="Buscar conversas"
+                placeholder="Cliente, telefone ou protocolo"
+              />
+              <div>
+                <select name="status" defaultValue={params.status ?? ""} aria-label="Filtrar por status">
+                  <option value="">Todos os status</option>
+                  {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                <select name="priority" defaultValue={params.priority ?? ""} aria-label="Filtrar por prioridade">
+                  <option value="">Prioridade</option>
+                  {Object.entries(PRIORITY_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                <input
+                  name="category"
+                  defaultValue={params.category}
+                  aria-label="Filtrar por categoria"
+                  placeholder="Categoria"
+                />
+                <button type="submit">Filtrar</button>
+              </div>
+            </form>
             <div className="tabs">
-              <b>Todos {conversations.length}</b>
-              <span>Na fila {queuedCount}</span>
-              <span>Meus {mineCount}</span>
+              <Link className={!params.scope ? "activeTab" : ""} href={filterHref(params, { scope: undefined })}>
+                Todos
+              </Link>
+              <Link className={params.scope === "queue" ? "activeTab" : ""} href={filterHref(params, { scope: "queue" })}>
+                Na fila {queuedCount}
+              </Link>
+              <Link className={params.scope === "mine" ? "activeTab" : ""} href={filterHref(params, { scope: "mine" })}>
+                Meus {mineCount}
+              </Link>
             </div>
 
             <div className="conversationList">
@@ -195,7 +286,7 @@ export default async function Home({
                     : "Conversa sem mensagens");
                 return (
                   <Link
-                    href={`/?conversation=${conversation.id}`}
+                    href={filterHref(params, { conversation: conversation.id })}
                     className={selected?.id === conversation.id ? "conversation selected" : "conversation"}
                     key={conversation.id}
                   >
@@ -213,8 +304,8 @@ export default async function Home({
               })}
               {!conversations.length ? (
                 <div className="emptyState">
-                  <strong>Nenhum atendimento</strong>
-                  <span>As novas mensagens do WhatsApp aparecerão aqui.</span>
+                  <strong>Nenhum atendimento encontrado</strong>
+                  <span>Ajuste os filtros ou aguarde novas mensagens.</span>
                 </div>
               ) : null}
             </div>
@@ -257,8 +348,8 @@ export default async function Home({
             ) : (
               <div className="emptyChat">
                 <div className="brandEmpty">♥</div>
-                <h2>Central pronta para atender</h2>
-                <p>Quando uma mensagem chegar, a conversa será criada e distribuída automaticamente.</p>
+                <h2>Nenhum atendimento selecionado</h2>
+                <p>Escolha uma conversa ou ajuste os filtros da fila.</p>
               </div>
             )}
           </section>
@@ -278,13 +369,15 @@ export default async function Home({
                   <dt>Status</dt><dd>{STATUS_LABEL[selected.status]}</dd>
                 </dl>
                 <hr />
-                <h4>Etiquetas</h4>
-                <div className="tags">
-                  {selected.tags.map(({ tag }) => (
-                    <span key={tag.id}>{tag.name}</span>
-                  ))}
-                  {!selected.tags.length ? <span>Sem etiquetas</span> : null}
-                </div>
+                <TicketControls
+                  conversationId={selected.id}
+                  status={selected.status}
+                  priority={selected.priority}
+                  category={selected.category}
+                  tags={availableTags}
+                  selectedTagIds={selected.tags.map(({ tagId }) => tagId)}
+                  canCreateTags={["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role)}
+                />
               </>
             ) : null}
           </aside>

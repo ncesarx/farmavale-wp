@@ -2,17 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { drainQueuedConversations } from "@/lib/conversation-assignment";
-import { getEnv } from "@/lib/env";
+import { hasTrustedOrigin } from "@/lib/http-security";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
   status: z.enum(["AVAILABLE", "BUSY", "AWAY", "OFFLINE"]),
 });
-
-function hasTrustedOrigin(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  return origin === new URL(getEnv().APP_BASE_URL).origin;
-}
 
 export async function POST(request: NextRequest) {
   if (!hasTrustedOrigin(request)) {
