@@ -194,7 +194,7 @@ export default async function OverviewPage({
           <Link href="/">▣ <span>Atendimentos</span></Link>
           <Link className="active" href="/overview">◫ <span>Visão geral</span></Link>
           <a>◎ <span>Clientes</span></a>
-          <a>▤ <span>Relatórios</span></a>
+          <Link href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
           <a>⌁ <span>Integrações</span></a>
           {["OWNER", "ADMIN"].includes(user.role) ? <Link href="/team">◇ <span>Equipe e acesso</span></Link> : null}
