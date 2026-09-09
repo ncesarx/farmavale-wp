@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   AssignmentCandidate,
   selectAssignmentCandidate,
-} from "@/lib/conversation-assignment";
+} from "@/lib/conversation-assignment-policy";
 
 test("selects the available candidate with the smallest workload", () => {
   const candidates: AssignmentCandidate[] = [
