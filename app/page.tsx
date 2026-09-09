@@ -256,6 +256,12 @@ export default async function Home({
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
+                <input
+                  name="category"
+                  defaultValue={params.category}
+                  aria-label="Filtrar por categoria"
+                  placeholder="Categoria"
+                />
                 <button type="submit">Filtrar</button>
               </div>
             </form>
