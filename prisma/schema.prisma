@@ -196,6 +196,7 @@ model Message {
   senderId       String?
   sender         User?            @relation("MessageSender", fields: [senderId], references: [id])
   externalId     String?          @unique
+  clientRequestId String?         @unique
   direction      MessageDirection
   status         MessageStatus
   body           String?
