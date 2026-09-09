@@ -199,7 +199,7 @@ export default async function Home({
           <a className="active">▣ <span>Atendimentos</span><b>{conversations.length}</b></a>
           <Link href="/overview">◫ <span>Visão geral</span></Link>
           <a>◎ <span>Clientes</span></a>
-          <a>▤ <span>Relatórios</span></a>
+          <Link href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
           <a>⌁ <span>Integrações</span></a>
           {["OWNER", "ADMIN"].includes(user.role) ? (
