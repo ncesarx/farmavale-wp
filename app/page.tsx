@@ -187,7 +187,7 @@ export default async function Home({
             </div>
 
             <div className="conversationList">
-              {conversations.map((conversation, index) => {
+              {conversations.map((conversation) => {
                 const preview =
                   conversation.messages[0]?.body ??
                   (conversation.messages[0]?.mediaType
