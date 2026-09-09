@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PresenceControl } from "@/components/PresenceControl";
+import { RealtimeUpdates } from "@/components/RealtimeUpdates";
 import { TicketControls } from "@/components/TicketControls";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -213,6 +214,7 @@ export default async function Home({
             <small>CENTRAL DE ATENDIMENTO</small>
             <h1>Atendimentos</h1>
           </div>
+          <RealtimeUpdates />
           <PresenceControl initialStatus={user.agentStatus} />
           <div className="live">{user.name} · {user.role}</div>
           <LogoutButton />
