@@ -89,3 +89,24 @@
 .bubble.failed{background:#3A1B2B;border:1px solid rgba(255,94,125,.35)}
 .deliveryStatus{display:block;margin-top:5px;color:#C9C3D5;font-size:7px}
 .bubble.failed .deliveryStatus{color:#FF8097}
+
+
+/* Equipe e acesso */
+.teamContent{overflow:auto}.teamWorkspace{padding:22px;display:grid;gap:18px;min-height:calc(100vh - 198px);background:#100F1D}
+.createMemberCard,.teamList{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.createMemberCard{display:grid;grid-template-columns:230px 1fr;gap:20px;align-items:center}
+.createMemberCard h2,.teamListTitle h2{font:600 19px var(--font-outfit);margin:4px 0}.createMemberCard p{color:var(--muted);font-size:10px;line-height:1.5}
+.createMemberCard>div>small{color:var(--gold);font:700 8px var(--font-nunito);letter-spacing:1.4px}
+.createMemberCard form{display:grid;grid-template-columns:1.2fr 1.3fr 1.1fr .85fr 80px auto;gap:7px}
+.createMemberCard input,.createMemberCard select,.teamMember input,.teamMember select{min-width:0;background:#100F1D;border:1px solid var(--border);border-radius:7px;color:#E7E3ED;padding:9px;font:600 9px var(--font-nunito)}
+.createMemberCard button,.teamMember button{margin:0}.createMemberCard>p{grid-column:2}
+.teamListTitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.teamListTitle span{color:var(--muted);font-size:9px}
+.teamMember{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(130px,.8fr) minmax(130px,1fr) 125px 105px 70px auto;gap:8px;align-items:end;padding:12px 0;border-top:1px solid var(--border)}
+.memberIdentity{display:flex;align-items:center;gap:9px}.memberIdentity>span{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#A64E7C,#5A1E7A);font:700 10px var(--font-outfit)}
+.memberIdentity div{display:flex;flex-direction:column;min-width:0}.memberIdentity strong{font:700 11px var(--font-nunito)}.memberIdentity small{color:var(--muted);font-size:8px;overflow:hidden;text-overflow:ellipsis}
+.memberPresence{display:grid;grid-template-columns:9px 1fr;align-items:center;color:#D2CDDC;font-size:9px}.memberPresence small{grid-column:2;color:var(--muted);font-size:7px;margin-top:3px}
+.agentDot{width:7px;height:7px;border-radius:50%;background:#777}.agent-available{background:var(--green)}.agent-busy{background:#FF5E7D}.agent-away{background:var(--gold)}
+.teamMember label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:8px}.teamMember>small{align-self:center;font-size:8px}.teamSuccess{color:#35D181!important}.teamError{color:#FF8097!important}
+.teamMember input:disabled,.teamMember select:disabled{opacity:.5}
+@media(max-width:1250px){.createMemberCard{grid-template-columns:1fr}.createMemberCard form{grid-template-columns:1fr 1fr 1fr}.createMemberCard>p{grid-column:1}.teamMember{grid-template-columns:1.4fr 1fr 1fr 1fr}.memberPresence{grid-column:2}.teamMember>small{grid-column:1/-1}}
+@media(max-width:720px){.teamMetrics{grid-template-columns:1fr 1fr}.teamWorkspace{padding:12px}.createMemberCard form,.teamMember{grid-template-columns:1fr}.memberPresence{grid-column:1}.teamMember>small{grid-column:1}}
