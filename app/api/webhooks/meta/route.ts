@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEnv } from "@/lib/env";
 import { processMetaWebhook } from "@/lib/meta-webhook-handler";
+import { publishRealtimeEvent } from "@/lib/realtime";
 import { verifyMetaSignature } from "@/lib/whatsapp";
 
 export async function GET(request: NextRequest) {
@@ -40,6 +41,19 @@ export async function POST(request: NextRequest) {
       ...result,
       durationMs: Date.now() - startedAt,
     });
+
+    if (result.created > 0) {
+      publishRealtimeEvent({
+        organizationSlug: "farmavale",
+        type: "message.received",
+      });
+    } else if (result.statusUpdates > 0) {
+      publishRealtimeEvent({
+        organizationSlug: "farmavale",
+        type: "inbox.changed",
+      });
+    }
+
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("meta_webhook_processing_failed", {
