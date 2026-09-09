@@ -96,7 +96,6 @@ export async function POST(
     const metaResponse = await sendWhatsAppText(
       normalizeWhatsAppRecipient(conversation.contact.phoneE164),
       parsed.data.body,
-      conversation.channel.externalId,
     );
     const externalId = getMetaMessageId(metaResponse);
     if (!externalId) throw new Error("Meta response did not include a message id");
