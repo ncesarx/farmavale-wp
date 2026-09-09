@@ -93,7 +93,7 @@ export async function PATCH(
 
   publishRealtimeEvent({
     organizationSlug: user.organization.slug,
-    type: "contact.updated",
+    type: "inbox.changed",
   });
 
   return NextResponse.json({ contact });
