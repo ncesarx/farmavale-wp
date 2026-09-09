@@ -198,7 +198,7 @@ export default async function Home({
         <nav>
           <a className="active">▣ <span>Atendimentos</span><b>{conversations.length}</b></a>
           <Link href="/overview">◫ <span>Visão geral</span></Link>
-          <a>◎ <span>Clientes</span></a>
+          <Link href="/clients">◎ <span>Clientes</span></Link>
           <Link href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
           <a>⌁ <span>Integrações</span></a>

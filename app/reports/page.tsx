@@ -94,7 +94,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <nav>
           <Link href="/">▣ <span>Atendimentos</span></Link>
           <Link href="/overview">◫ <span>Visão geral</span></Link>
-          <a>◎ <span>Clientes</span></a>
+          <Link href="/clients">◎ <span>Clientes</span></Link>
           <Link className="active" href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
           <a>⌁ <span>Integrações</span></a>
