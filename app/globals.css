@@ -68,3 +68,13 @@
 
 .queueFilters>div{grid-template-columns:1fr 1fr}
 .queueFilters>div>input{min-width:0;background:#100F1D;border:1px solid var(--border);border-radius:7px;color:#DCD8E6;padding:7px;font:600 9px var(--font-nunito)}
+
+
+/* Atualização em tempo real */
+.realtimeStatus{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font:700 8px var(--font-nunito)}
+.realtimeStatus>span{display:flex;align-items:center;gap:5px}.realtimeStatus i{width:6px;height:6px;border-radius:50%;display:inline-block}
+.streamOnline i{background:var(--green);box-shadow:0 0 0 3px rgba(0,168,89,.12)}.streamOffline i{background:var(--gold)}
+.realtimeStatus button{margin:0;padding:7px 9px;background:#211D37;border:1px solid var(--border);font-size:8px}.realtimeStatus small{color:#817B93}
+.content>header .presenceWrap{margin-left:0}
+@media(max-width:1100px){.realtimeStatus>span,.realtimeStatus small{display:none}}
+@media(max-width:820px){.realtimeStatus{display:none}.content>header .presenceWrap{margin-left:auto}}
