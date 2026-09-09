@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { drainQueuedConversations } from "@/lib/conversation-assignment";
 import { hasTrustedOrigin } from "@/lib/http-security";
 import { prisma } from "@/lib/prisma";
+import { publishRealtimeEvent } from "@/lib/realtime";
 
 const updateSchema = z
   .object({
@@ -149,6 +150,11 @@ export async function PATCH(
     updated.status === "QUEUED"
       ? await drainQueuedConversations(user.organizationId)
       : 0;
+
+  publishRealtimeEvent({
+    organizationSlug: user.organization.slug,
+    type: assignedFromQueue > 0 ? "conversation.assigned" : "conversation.updated",
+  });
 
   return NextResponse.json({ conversation: updated, assignedFromQueue });
 }
