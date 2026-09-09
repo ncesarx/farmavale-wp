@@ -97,7 +97,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           <Link href="/clients">◎ <span>Clientes</span></Link>
           <Link className="active" href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
-          <a>⌁ <span>Integrações</span></a>
+          <Link href="/integrations">⌁ <span>Integrações</span></Link>
           {["OWNER", "ADMIN"].includes(user.role) ? <Link href="/team">◇ <span>Equipe e acesso</span></Link> : null}
         </nav>
       </aside>
