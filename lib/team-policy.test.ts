@@ -29,3 +29,10 @@ test("an owner can manage other users and assign roles", () => {
   );
   assert.equal(canAssignRole("OWNER", "ADMIN"), true);
 });
+
+test("admins may edit their own non-access profile fields", () => {
+  assert.equal(
+    canManageTarget("ADMIN", "admin", { id: "admin", role: "ADMIN" }),
+    true,
+  );
+});
