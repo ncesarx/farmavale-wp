@@ -61,21 +61,21 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       where: {
         direction: "INBOUND",
         createdAt: { gte: range.start, lt: range.end },
-        conversation: { organizationId: user.organizationId, ...(params.agent ? { assignments: { some: { agentId: params.agent } } } : {}) },
+        conversation: where,
       },
     }),
     prisma.message.count({
       where: {
         direction: "OUTBOUND",
         createdAt: { gte: range.start, lt: range.end },
-        conversation: { organizationId: user.organizationId, ...(params.agent ? { assignments: { some: { agentId: params.agent } } } : {}) },
+        conversation: where,
       },
     }),
     prisma.message.count({
       where: {
         direction: "OUTBOUND", status: "FAILED",
         createdAt: { gte: range.start, lt: range.end },
-        conversation: { organizationId: user.organizationId },
+        conversation: where,
       },
     }),
   ]);
