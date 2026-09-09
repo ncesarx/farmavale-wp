@@ -47,7 +47,7 @@ export default async function TeamPage() {
           <Link href="/clients">◎ <span>Clientes</span></Link>
           <Link href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
-          <a>⌁ <span>Integrações</span></a>
+          <Link href="/integrations">⌁ <span>Integrações</span></Link>
           <Link className="active" href="/team">◇ <span>Equipe e acesso</span></Link>
         </nav>
       </aside>
