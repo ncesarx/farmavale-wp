@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { drainQueuedConversations } from "@/lib/conversation-assignment";
 import { hasTrustedOrigin } from "@/lib/http-security";
 import { prisma } from "@/lib/prisma";
+import { dispatchWebhookEvent } from "@/lib/outbound-webhooks";
 import { publishRealtimeEvent } from "@/lib/realtime";
 
 const updateSchema = z
@@ -114,6 +115,7 @@ export async function PATCH(
       },
       select: {
         id: true,
+        protocol: true,
         status: true,
         priority: true,
         category: true,
@@ -154,6 +156,15 @@ export async function PATCH(
   publishRealtimeEvent({
     organizationSlug: user.organization.slug,
     type: assignedFromQueue > 0 ? "conversation.assigned" : "conversation.updated",
+  });
+  after(async () => {
+    await dispatchWebhookEvent(user.organizationId, "conversation.updated", {
+      id: updated.id,
+      protocol: updated.protocol,
+      status: updated.status,
+      priority: updated.priority,
+      category: updated.category,
+    });
   });
 
   return NextResponse.json({ conversation: updated, assignedFromQueue });
