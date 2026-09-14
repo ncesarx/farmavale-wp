@@ -29,8 +29,6 @@ export async function deliverWebhook(deliveryId: string) {
 
   const url = parseSafeWebhookUrl(delivery.endpoint.url);
   if (!url) throw new Error("unsafe_webhook_url");
-  await assertPublicDestination(url);
-
   const body = JSON.stringify(delivery.payload);
   const secret = decryptWebhookSecret(delivery.endpoint.secretEncrypted, getEnv().AUTH_SECRET);
   const signature = createHmac("sha256", secret).update(body).digest("hex");
@@ -42,6 +40,7 @@ export async function deliverWebhook(deliveryId: string) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8_000);
     try {
+      await assertPublicDestination(url);
       const response = await fetch(url, {
         method: "POST",
         redirect: "manual",
