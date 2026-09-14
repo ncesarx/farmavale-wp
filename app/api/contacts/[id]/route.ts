@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { canEditCustomers } from "@/lib/customer-policy";
 import { hasTrustedOrigin } from "@/lib/http-security";
 import { prisma } from "@/lib/prisma";
+import { dispatchWebhookEvent } from "@/lib/outbound-webhooks";
 import { publishRealtimeEvent } from "@/lib/realtime";
 
 const updateSchema = z
@@ -72,7 +73,7 @@ export async function PATCH(
             ? undefined
             : parsed.data.externalCrmId || null,
       },
-      select: { id: true, name: true, email: true, externalCrmId: true },
+      select: { id: true, name: true, phoneE164: true, email: true, externalCrmId: true },
     });
 
     await tx.auditLog.create({
@@ -94,6 +95,15 @@ export async function PATCH(
   publishRealtimeEvent({
     organizationSlug: user.organization.slug,
     type: "inbox.changed",
+  });
+  after(async () => {
+    await dispatchWebhookEvent(user.organizationId, "contact.updated", {
+      id: contact.id,
+      name: contact.name,
+      phone: contact.phoneE164,
+      email: contact.email,
+      externalCrmId: contact.externalCrmId,
+    });
   });
 
   return NextResponse.json({ contact });
