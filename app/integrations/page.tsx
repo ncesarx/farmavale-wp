@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ApiCredentialManager } from "@/components/ApiCredentialManager";
 import { LogoutButton } from "@/components/LogoutButton";
 import { RealtimeUpdates } from "@/components/RealtimeUpdates";
+import { WebhookManager } from "@/components/WebhookManager";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +28,7 @@ export default async function IntegrationsPage() {
   if (!user) redirect("/login");
   if (!["OWNER", "ADMIN", "SUPERVISOR", "ANALYST"].includes(user.role)) redirect("/");
 
-  const [credentials, runs, integrations, contactCount] = await Promise.all([
+  const [credentials, runs, integrations, contactCount, webhookEndpoints] = await Promise.all([
     prisma.apiCredential.findMany({
       where: { organizationId: user.organizationId, revokedAt: null },
       orderBy: { createdAt: "desc" },
@@ -46,6 +47,19 @@ export default async function IntegrationsPage() {
       select: { id: true, provider: true, status: true, externalAccountId: true, lastSyncAt: true },
     }),
     prisma.contact.count({ where: { organizationId: user.organizationId, externalCrmId: { not: null } } }),
+    prisma.webhookEndpoint.findMany({
+      where: { organizationId: user.organizationId, isActive: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        id: true, name: true, url: true, events: true, lastSuccessAt: true, lastFailureAt: true,
+        deliveries: {
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          select: { id: true, eventType: true, status: true, attempts: true, responseCode: true, lastError: true, createdAt: true },
+        },
+      },
+    }),
   ]);
 
   const succeeded = runs.filter((run) => run.status === "SUCCEEDED").length;
@@ -76,7 +90,7 @@ export default async function IntegrationsPage() {
         </header>
 
         <div className="integrationMetrics">
-          <article><span>Conectores</span><strong>{integrations.length}</strong><small>Configurações cadastradas</small></article>
+          <article><span>Conectores</span><strong>{integrations.length + webhookEndpoints.length}</strong><small>Configurações cadastradas</small></article>
           <article><span>Chaves ativas</span><strong>{credentials.length}</strong><small>Acesso controlado</small></article>
           <article><span>Clientes sincronizados</span><strong>{contactCount}</strong><small>Com ID externo</small></article>
           <article><span>Execuções concluídas</span><strong>{succeeded}</strong><small>{failed} falhas recentes</small></article>
@@ -108,6 +122,20 @@ export default async function IntegrationsPage() {
             }))} />
           ) : (
             <section className="integrationCard"><div className="integrationTitle"><div><small>ACESSO PROGRAMÁTICO</small><h2>Chaves da API</h2></div></div><p>Somente proprietários e administradores podem gerar ou revogar credenciais.</p></section>
+          )}
+
+          {canManage ? (
+            <WebhookManager endpoints={webhookEndpoints.map((endpoint) => ({
+              ...endpoint,
+              lastSuccessAt: formatDate(endpoint.lastSuccessAt),
+              lastFailureAt: formatDate(endpoint.lastFailureAt),
+              deliveries: endpoint.deliveries.map((delivery) => ({
+                ...delivery,
+                createdAt: formatDate(delivery.createdAt) ?? "",
+              })),
+            }))} />
+          ) : (
+            <section className="integrationCard"><div className="integrationTitle"><div><small>SINCRONIZAÇÃO DE SAÍDA</small><h2>Webhooks para CRM</h2></div><span>{webhookEndpoints.length} ativos</span></div><p>Somente proprietários e administradores podem configurar destinos e reenviar entregas.</p></section>
           )}
 
           <section className="integrationCard integrationRuns">
