@@ -59,3 +59,40 @@ A combinação organização + telefone torna a operação idempotente:
 - configure expiração e faça rotação periódica;
 - revogue imediatamente credenciais suspeitas;
 - cada sincronização gera um `IntegrationRun` e um registro de auditoria.
+
+
+## Webhooks de saída
+
+Cadastre uma URL pública HTTPS em **Integrações → Webhooks para CRM**. São suportados inicialmente:
+
+- `contact.updated`;
+- `conversation.updated`.
+
+Cada requisição inclui:
+
+```http
+X-Farmavale-Delivery: <UUID do evento>
+X-Farmavale-Event: contact.updated
+X-Farmavale-Signature-256: sha256=<assinatura hexadecimal>
+```
+
+A assinatura é o HMAC-SHA256 do corpo bruto da requisição usando o segredo `whsec_...` exibido somente na criação.
+
+Exemplo de verificação em Node.js:
+
+```js
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+const expected = createHmac("sha256", process.env.FARMAVALE_WEBHOOK_SECRET)
+  .update(rawBody)
+  .digest("hex");
+const received = request.headers["x-farmavale-signature-256"]?.replace("sha256=", "");
+
+const valid =
+  received?.length === expected.length &&
+  timingSafeEqual(Buffer.from(received), Buffer.from(expected));
+```
+
+O receptor deve responder com HTTP 2xx. A Farmavale realiza até três tentativas automáticas. Entregas malsucedidas permanecem no painel e podem ser reenviadas por um proprietário ou administrador.
+
+Por segurança, destinos devem usar HTTPS público. URLs com credenciais, portas explícitas, localhost, redes privadas e endereços link-local são recusadas.

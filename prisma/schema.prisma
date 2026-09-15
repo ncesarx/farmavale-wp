@@ -86,6 +86,12 @@ enum IntegrationRunStatus {
   FAILED
 }
 
+enum WebhookDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
 model Organization {
   id           String         @id @default(cuid())
   name         String
@@ -101,6 +107,7 @@ model Organization {
   integrations Integration[]
   integrationRuns IntegrationRun[]
   apiCredentials ApiCredential[]
+  webhookEndpoints WebhookEndpoint[]
   auditLogs    AuditLog[]
 }
 
@@ -307,6 +314,43 @@ model IntegrationRun {
   metadata       Json?
   @@index([organizationId, startedAt])
   @@index([integrationId, startedAt])
+}
+
+model WebhookEndpoint {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  url            String
+  secretEncrypted String
+  events         String[]
+  isActive       Boolean      @default(true)
+  lastSuccessAt  DateTime?
+  lastFailureAt  DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deliveries     WebhookDelivery[]
+  @@index([organizationId, isActive])
+}
+
+model WebhookDelivery {
+  id             String                @id @default(cuid())
+  endpointId     String
+  endpoint       WebhookEndpoint       @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  eventId        String
+  eventType      String
+  payload        Json
+  status         WebhookDeliveryStatus @default(PENDING)
+  attempts       Int                   @default(0)
+  responseCode   Int?
+  lastError      String?
+  nextAttemptAt  DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  @@unique([endpointId, eventId])
+  @@index([status, nextAttemptAt])
+  @@index([endpointId, createdAt])
 }
 
 model AuditLog {
