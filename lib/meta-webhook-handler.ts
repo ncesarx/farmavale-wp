@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { autoAssignConversation } from "@/lib/conversation-assignment";
 import { prisma } from "@/lib/prisma";
+import { createUserNotification } from "@/lib/notifications";
 import {
   MetaInboundMessage,
   MetaMessageStatus,
@@ -52,7 +53,7 @@ async function persistInbound(message: MetaInboundMessage) {
         select: { id: true },
       });
       if (existing) {
-        return { outcome: "duplicate", assignment: null } as const;
+        return { outcome: "duplicate", assignment: null, notification: null } as const;
       }
 
       const organization = await tx.organization.findUnique({
@@ -178,12 +179,24 @@ async function persistInbound(message: MetaInboundMessage) {
         organization.id,
         conversation.id,
       );
-
-      return { outcome: "created", assignment } as const;
+      const updated = await tx.conversation.findUniqueOrThrow({
+        where: { id: conversation.id },
+        select: { id: true, protocol: true, assignedAgentId: true },
+      });
+      return {
+        outcome: "created", assignment,
+        notification: updated.assignedAgentId ? {
+          organizationId: organization.id,
+          userId: updated.assignedAgentId,
+          conversationId: updated.id,
+          protocol: updated.protocol,
+          contactName: contact.name,
+        } : null,
+      } as const;
     });
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return { outcome: "duplicate", assignment: null } as const;
+      return { outcome: "duplicate", assignment: null, notification: null } as const;
     }
     throw error;
   }
@@ -233,6 +246,26 @@ export async function processMetaWebhook(payload: unknown): Promise<MetaProcessi
     result[persisted.outcome === "created" ? "created" : "duplicates"] += 1;
     if (persisted.assignment === "assigned") result.autoAssigned += 1;
     if (persisted.assignment === "queued") result.leftQueued += 1;
+    if (persisted.outcome === "created" && persisted.notification) {
+      const target = persisted.notification;
+      try {
+        await createUserNotification({
+          organizationId: target.organizationId,
+          userId: target.userId,
+          type: persisted.assignment === "assigned" ? "ASSIGNMENT" : "NEW_MESSAGE",
+          title: persisted.assignment === "assigned" ? "Novo atendimento atribuído" : "Nova mensagem recebida",
+          body: `${target.contactName} · ${target.protocol}`,
+          href: `/?conversation=${target.conversationId}`,
+          metadata: { conversationId: target.conversationId, messageExternalId: message.id },
+          dedupKey: `message:${message.id}:${target.userId}`,
+        });
+      } catch (error) {
+        console.error("notification_creation_failed", {
+          error: error instanceof Error ? error.name : "UnknownError",
+          conversationId: target.conversationId,
+        });
+      }
+    }
   }
 
   for (const status of events.statuses) {

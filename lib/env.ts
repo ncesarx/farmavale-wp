@@ -9,6 +9,9 @@ const schema = z.object({
   META_PHONE_NUMBER_ID: z.string().optional(),
   META_APP_SECRET: z.string().min(1),
   META_GRAPH_API_VERSION: z.string().default("v26.0"),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
 });
 
 export function getEnv() {

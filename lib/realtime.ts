@@ -5,7 +5,8 @@ export type RealtimeEventType =
   | "inbox.changed"
   | "message.received"
   | "conversation.assigned"
-  | "conversation.updated";
+  | "conversation.updated"
+  | "notification.created";
 
 export type RealtimeEvent = {
   id: string;
