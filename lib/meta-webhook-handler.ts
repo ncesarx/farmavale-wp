@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { autoAssignConversation } from "@/lib/conversation-assignment";
 import { prisma } from "@/lib/prisma";
 import { createUserNotification } from "@/lib/notifications";
+import { calculateSlaDueAt, DEFAULT_SLA_POLICIES } from "@/lib/sla-policy";
 import {
   MetaInboundMessage,
   MetaMessageStatus,
@@ -103,6 +104,14 @@ async function persistInbound(message: MetaInboundMessage) {
         },
       });
 
+      const normalPolicy = await tx.slaPolicy.findUnique({
+        where: { organizationId_priority: { organizationId: organization.id, priority: "NORMAL" } },
+        select: { responseMinutes: true, isActive: true },
+      });
+      const responseMinutes = normalPolicy?.isActive === false
+        ? null
+        : normalPolicy?.responseMinutes ?? DEFAULT_SLA_POLICIES.NORMAL.responseMinutes;
+
       let conversation = await tx.conversation.findFirst({
         where: {
           organizationId: organization.id,
@@ -123,6 +132,7 @@ async function persistInbound(message: MetaInboundMessage) {
             protocol: protocolFor(message),
             status: "QUEUED",
             lastMessageAt: message.timestamp,
+            slaDueAt: responseMinutes ? calculateSlaDueAt(message.timestamp, responseMinutes) : null,
           },
           select: { id: true, status: true, assignedAgentId: true },
         });
@@ -157,6 +167,10 @@ async function persistInbound(message: MetaInboundMessage) {
                 ? "OPEN"
                 : "QUEUED"
               : conversation.status,
+          slaDueAt:
+            conversation.status === "PENDING" && responseMinutes
+              ? calculateSlaDueAt(message.timestamp, responseMinutes)
+              : undefined,
         },
       });
 

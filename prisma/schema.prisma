@@ -116,7 +116,25 @@ model Organization {
   apiCredentials   ApiCredential[]
   webhookEndpoints WebhookEndpoint[]
   notifications    Notification[]
+  slaPolicies      SlaPolicy[]
   auditLogs        AuditLog[]
+}
+
+model SlaPolicy {
+  id                   String               @id @default(cuid())
+  organizationId       String
+  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  priority             ConversationPriority
+  responseMinutes      Int
+  warningMinutes       Int                  @default(15)
+  escalateAfterMinutes Int                  @default(0)
+  notifySupervisors    Boolean              @default(true)
+  isActive             Boolean              @default(true)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@unique([organizationId, priority])
+  @@index([organizationId, isActive])
 }
 
 model User {

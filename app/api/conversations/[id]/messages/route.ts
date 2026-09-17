@@ -118,6 +118,7 @@ export async function POST(
         data: {
           lastMessageAt: now,
           firstResponseAt: conversation.firstResponseAt ?? now,
+          slaDueAt: conversation.firstResponseAt ? undefined : null,
         },
       });
 
