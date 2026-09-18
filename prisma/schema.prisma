@@ -117,7 +117,25 @@ model Organization {
   webhookEndpoints WebhookEndpoint[]
   notifications    Notification[]
   slaPolicies      SlaPolicy[]
+  quickReplies     QuickReply[]
   auditLogs        AuditLog[]
+}
+
+model QuickReply {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  shortcut       String
+  body           String
+  category       String?
+  isActive       Boolean      @default(true)
+  usageCount     Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, shortcut])
+  @@index([organizationId, isActive, category])
 }
 
 model SlaPolicy {
