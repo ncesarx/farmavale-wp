@@ -118,7 +118,30 @@ model Organization {
   notifications    Notification[]
   slaPolicies      SlaPolicy[]
   quickReplies     QuickReply[]
+  automationRules  AutomationRule[]
   auditLogs        AuditLog[]
+}
+
+model AutomationRule {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  keyword        String
+  priority       ConversationPriority?
+  tagId          String?
+  tag            Tag?                  @relation(fields: [tagId], references: [id], onDelete: SetNull)
+  assigneeId     String?
+  assignee       User?                 @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  isActive       Boolean               @default(true)
+  matchCount     Int                   @default(0)
+  lastMatchedAt  DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([organizationId, isActive, createdAt])
+  @@index([tagId])
+  @@index([assigneeId])
 }
 
 model QuickReply {
@@ -177,6 +200,7 @@ model User {
   notifications          Notification[]
   pushSubscriptions      PushSubscription[]
   notificationPreference NotificationPreference?
+  automationRules         AutomationRule[]
 
   @@unique([organizationId, email])
   @@index([organizationId, agentStatus])
@@ -346,6 +370,7 @@ model Tag {
   createdAt        DateTime          @default(now())
   conversationTags ConversationTag[]
   contactTags      ContactTag[]
+  automationRules  AutomationRule[]
 
   @@unique([organizationId, name])
 }
