@@ -200,7 +200,7 @@ export default async function Home({
     <main className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <span>♥</span>
+          <span aria-hidden="true" />
           <div><strong>farmavale</strong><small>CENTRAL</small></div>
         </div>
         <nav>
@@ -210,6 +210,7 @@ export default async function Home({
           <Link href="/reports">▤ <span>Relatórios</span></Link>
           <p>GESTÃO</p>
           <Link href="/integrations">⌁ <span>Integrações</span></Link>
+          {["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role) ? <Link href="/audit">⌕ <span>Auditoria</span></Link> : null}
           {["OWNER", "ADMIN"].includes(user.role) ? (
             <Link href="/team">◇ <span>Equipe e acesso</span></Link>
           ) : (
@@ -382,7 +383,7 @@ export default async function Home({
               </>
             ) : (
               <div className="emptyChat">
-                <div className="brandEmpty">♥</div>
+                <div className="brandEmpty" aria-hidden="true" />
                 <h2>Nenhum atendimento selecionado</h2>
                 <p>Escolha uma conversa ou ajuste os filtros da fila.</p>
               </div>

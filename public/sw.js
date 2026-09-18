@@ -2,7 +2,7 @@ self.addEventListener("push", (event) => {
   let payload = { title: "Farmavale Central", body: "Novo alerta operacional", href: "/" };
   try { payload = { ...payload, ...event.data.json() }; } catch {}
   event.waitUntil(self.registration.showNotification(payload.title, {
-    body: payload.body, icon: "/icon.svg", badge: "/icon.svg",
+    body: payload.body, icon: "/farmavale-logo.png", badge: "/farmavale-logo.png",
     tag: payload.notificationId || payload.type || "farmavale", data: { href: payload.href || "/" },
   }));
 });
