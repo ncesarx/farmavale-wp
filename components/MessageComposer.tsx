@@ -7,12 +7,14 @@ type Props = {
   conversationId: string;
   canSend: boolean;
   disabledReason?: string;
+  quickReplies?: Array<{ id: string; title: string; shortcut: string; body: string }>;
 };
 
 export function MessageComposer({
   conversationId,
   canSend,
   disabledReason,
+  quickReplies = [],
 }: Props) {
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -61,9 +63,17 @@ export function MessageComposer({
     }
   }
 
+  function selectQuickReply(id: string) {
+    const reply = quickReplies.find((item) => item.id === id);
+    if (!reply) return;
+    setBody(reply.body);
+    void fetch(`/api/quick-replies/${reply.id}/use`, { method: "POST" });
+  }
+
   return (
     <form className="composer" onSubmit={sendMessage}>
       <div>
+        {quickReplies.length ? <select aria-label="Resposta rápida" defaultValue="" onChange={(event) => { selectQuickReply(event.target.value); event.currentTarget.value = ""; }} disabled={!canSend || sending}><option value="" disabled>⌘ Resposta rápida…</option>{quickReplies.map((reply) => <option key={reply.id} value={reply.id}>{reply.shortcut} · {reply.title}</option>)}</select> : null}
         <textarea
           aria-label="Mensagem"
           placeholder={canSend ? "Digite uma mensagem…" : disabledReason}

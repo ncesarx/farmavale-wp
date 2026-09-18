@@ -8,6 +8,7 @@ import { RealtimeUpdates } from "@/components/RealtimeUpdates";
 import { TicketControls } from "@/components/TicketControls";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { applyReplyVariables } from "@/lib/quick-reply";
 
 const STATUS_LABEL = {
   QUEUED: "Na fila",
@@ -116,6 +117,7 @@ export default async function Home({
     channel,
     conversations,
     availableTags,
+    quickReplies,
   ] = await Promise.all([
     prisma.conversation.count({ where: { organizationId, status: "OPEN" } }),
     prisma.conversation.count({ where: { organizationId, status: "QUEUED" } }),
@@ -156,6 +158,12 @@ export default async function Home({
       where: { organizationId },
       orderBy: { name: "asc" },
       select: { id: true, name: true, color: true },
+    }),
+    prisma.quickReply.findMany({
+      where: { organizationId, isActive: true },
+      orderBy: [{ usageCount: "desc" }, { title: "asc" }],
+      take: 50,
+      select: { id: true, title: true, shortcut: true, body: true },
     }),
   ]);
 
@@ -208,6 +216,7 @@ export default async function Home({
             <a>◇ <span>Equipe e acesso</span></a>
           )}
           {["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role) ? <Link href="/operations">◷ <span>SLA e filas</span></Link> : null}
+          {["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role) ? <Link href="/quick-replies">⌘ <span>Respostas rápidas</span></Link> : null}
         </nav>
         <div className={channel ? "connection connected" : "connection"}>
           <i /> {channel ? "WhatsApp conectado" : "WhatsApp não configurado"}
@@ -355,6 +364,10 @@ export default async function Home({
                 </div>
                 <MessageComposer
                   conversationId={selected.id}
+                  quickReplies={quickReplies.map((reply) => ({
+                    ...reply,
+                    body: applyReplyVariables(reply.body, { customerName: selected.contact.name, agentName: user.name, protocol: selected.protocol }),
+                  }))}
                   canSend={
                     ["OPEN", "PENDING"].includes(selected.status) &&
                     (selected.assignedAgentId === user.id ||
