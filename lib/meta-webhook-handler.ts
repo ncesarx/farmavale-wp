@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { autoAssignConversation } from "@/lib/conversation-assignment";
+import { applyInboundAutomationRules } from "@/lib/automation-rules";
 import { prisma } from "@/lib/prisma";
 import { createUserNotification } from "@/lib/notifications";
 import { calculateSlaDueAt, DEFAULT_SLA_POLICIES } from "@/lib/sla-policy";
@@ -188,11 +189,10 @@ async function persistInbound(message: MetaInboundMessage) {
         },
       });
 
-      const assignment = await autoAssignConversation(
-        tx,
-        organization.id,
-        conversation.id,
-      );
+      const automated = await applyInboundAutomationRules(tx, organization.id, conversation.id, message.body);
+      const assignment = automated.assigned
+        ? "assigned" as const
+        : await autoAssignConversation(tx, organization.id, conversation.id);
       const updated = await tx.conversation.findUniqueOrThrow({
         where: { id: conversation.id },
         select: { id: true, protocol: true, assignedAgentId: true },
