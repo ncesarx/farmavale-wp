@@ -69,7 +69,7 @@ export default async function IntegrationsPage() {
   return (
     <main className="shell">
       <aside className="sidebar">
-        <div className="brand"><span>♥</span><div><strong>farmavale</strong><small>CENTRAL</small></div></div>
+        <div className="brand"><span aria-hidden="true" /><div><strong>farmavale</strong><small>CENTRAL</small></div></div>
         <nav>
           <Link href="/">▣ <span>Atendimentos</span></Link>
           <Link href="/overview">◫ <span>Visão geral</span></Link>

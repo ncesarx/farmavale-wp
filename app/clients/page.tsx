@@ -130,7 +130,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   return (
     <main className="shell">
       <aside className="sidebar">
-        <div className="brand"><span>♥</span><div><strong>farmavale</strong><small>CENTRAL</small></div></div>
+        <div className="brand"><span aria-hidden="true" /><div><strong>farmavale</strong><small>CENTRAL</small></div></div>
         <nav>
           <Link href="/">▣ <span>Atendimentos</span></Link>
           <Link href="/overview">◫ <span>Visão geral</span></Link>
@@ -225,7 +225,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                   {!selected.conversations.length ? <div className="emptyState"><strong>Sem histórico</strong><span>Este cliente ainda não possui atendimentos.</span></div> : null}
                 </div>
               </>
-            ) : <div className="emptyChat"><div className="brandEmpty">♥</div><h2>Nenhum cliente selecionado</h2><p>Escolha um cliente na lista para consultar o perfil completo.</p></div>}
+            ) : <div className="emptyChat"><div className="brandEmpty" aria-hidden="true" /><h2>Nenhum cliente selecionado</h2><p>Escolha um cliente na lista para consultar o perfil completo.</p></div>}
           </section>
         </div>
       </section>

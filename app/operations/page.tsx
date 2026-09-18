@@ -34,7 +34,7 @@ export default async function OperationsPage() {
     prisma.conversation.count({ where: { organizationId: user.organizationId, status: "QUEUED" } }),
   ]);
   return <main className="shell">
-    <aside className="sidebar"><div className="brand"><span>♥</span><div><strong>farmavale</strong><small>CENTRAL</small></div></div><nav>
+    <aside className="sidebar"><div className="brand"><span aria-hidden="true" /><div><strong>farmavale</strong><small>CENTRAL</small></div></div><nav>
       <Link href="/">▣ <span>Atendimentos</span></Link><Link href="/overview">◫ <span>Visão geral</span></Link><Link href="/clients">◎ <span>Clientes</span></Link><Link href="/reports">▤ <span>Relatórios</span></Link><p>GESTÃO</p><Link href="/integrations">⌁ <span>Integrações</span></Link><Link href="/team">◇ <span>Equipe e acesso</span></Link><a className="active">◷ <span>SLA e filas</span></a>
     </nav></aside>
     <section className="content operationsContent"><header><div><small>OPERAÇÃO E QUALIDADE</small><h1>SLA, filas e escalonamentos</h1></div><RealtimeUpdates /><span className="userPill">{user.name} · {user.role}</span><LogoutButton /></header>

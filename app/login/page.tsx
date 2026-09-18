@@ -8,7 +8,7 @@ export default async function LoginPage() {
   return (
     <main className="loginPage">
       <section className="loginBrand">
-        <div className="loginMark">♥</div>
+        <div className="loginMark" aria-hidden="true" />
         <div><strong>farmavale</strong><span>CENTRAL</span></div>
         <h1>Atendimento conectado.<br />Gestão em tempo real.</h1>
         <p>Central segura para organizar conversas, equipes e indicadores.</p>

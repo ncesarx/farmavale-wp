@@ -51,7 +51,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return <main className="shell">
-    <aside className="sidebar"><div className="brand"><span>♥</span><div><strong>farmavale</strong><small>CENTRAL</small></div></div><nav>
+    <aside className="sidebar"><div className="brand"><span aria-hidden="true" /><div><strong>farmavale</strong><small>CENTRAL</small></div></div><nav>
       <Link href="/">▣ <span>Atendimentos</span></Link><Link href="/overview">◫ <span>Visão geral</span></Link><Link href="/clients">◎ <span>Clientes</span></Link><Link href="/reports">▤ <span>Relatórios</span></Link><p>GESTÃO</p><Link href="/integrations">⌁ <span>Integrações</span></Link><Link href="/team">◇ <span>Equipe e acesso</span></Link><Link className="active" href="/audit">⌕ <span>Auditoria</span></Link>
     </nav></aside>
     <section className="content auditContent"><header><div><small>SEGURANÇA OPERACIONAL</small><h1>Auditoria</h1></div><div className="live">{user.name} · {user.role}</div><LogoutButton /></header>
