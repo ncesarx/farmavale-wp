@@ -218,6 +218,7 @@ export default async function Home({
           )}
           {["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role) ? <Link href="/operations">◷ <span>SLA e filas</span></Link> : null}
           {["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role) ? <Link href="/quick-replies">⌘ <span>Respostas rápidas</span></Link> : null}
+          {["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role) ? <Link href="/automations">⚙ <span>Automações</span></Link> : null}
         </nav>
         <div className={channel ? "connection connected" : "connection"}>
           <i /> {channel ? "WhatsApp conectado" : "WhatsApp não configurado"}
