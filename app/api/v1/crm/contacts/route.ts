@@ -4,6 +4,7 @@ import { authenticateApiRequest } from "@/lib/api-auth";
 import { normalizeCrmPhone } from "@/lib/api-credentials";
 import { prisma } from "@/lib/prisma";
 import { publishRealtimeEvent } from "@/lib/realtime";
+import { consumeRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -13,12 +14,29 @@ const contactSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const clientIp = getClientIp(request.headers);
+  const anonymousLimit = consumeRateLimit(`crm:ip:${clientIp}`, 120, 60_000);
+  if (!anonymousLimit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(anonymousLimit.retryAfterSeconds) } },
+    );
+  }
+
   const credential = await authenticateApiRequest(
     request.headers.get("authorization"),
     "contacts:write",
   );
   if (!credential) {
     return NextResponse.json({ error: "invalid_api_credential" }, { status: 401 });
+  }
+
+  const credentialLimit = consumeRateLimit(`crm:credential:${credential.id}`, 100, 60_000);
+  if (!credentialLimit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(credentialLimit.retryAfterSeconds) } },
+    );
   }
 
   const parsed = contactSchema.safeParse(await request.json().catch(() => null));
