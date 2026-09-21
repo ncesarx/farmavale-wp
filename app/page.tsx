@@ -6,7 +6,9 @@ import { MessageComposer } from "@/components/MessageComposer";
 import { PresenceControl } from "@/components/PresenceControl";
 import { RealtimeUpdates } from "@/components/RealtimeUpdates";
 import { TicketControls } from "@/components/TicketControls";
+import { ConversationCollaboration } from "@/components/ConversationCollaboration";
 import { getCurrentUser } from "@/lib/auth";
+import { canCollaborateOnConversation, isEligibleTransferTarget } from "@/lib/conversation-collaboration";
 import { prisma } from "@/lib/prisma";
 import { applyReplyVariables } from "@/lib/quick-reply";
 
@@ -118,6 +120,7 @@ export default async function Home({
     conversations,
     availableTags,
     quickReplies,
+    transferCandidates,
   ] = await Promise.all([
     prisma.conversation.count({ where: { organizationId, status: "OPEN" } }),
     prisma.conversation.count({ where: { organizationId, status: "QUEUED" } }),
@@ -165,6 +168,18 @@ export default async function Home({
       take: 50,
       select: { id: true, title: true, shortcut: true, body: true },
     }),
+    prisma.user.findMany({
+      where: {
+        organizationId,
+        status: "ACTIVE",
+        role: { in: ["OWNER", "ADMIN", "SUPERVISOR", "AGENT"] },
+      },
+      orderBy: { name: "asc" },
+      select: {
+        id: true, name: true, role: true, status: true, agentStatus: true, maxOpenConversations: true,
+        _count: { select: { assignedConversations: { where: { status: { in: ["OPEN", "PENDING"] } } } } },
+      },
+    }),
   ]);
 
   const selected =
@@ -184,6 +199,7 @@ export default async function Home({
             mediaType: true,
             status: true,
             createdAt: true,
+            sender: { select: { name: true } },
           },
         })
       ).reverse()
@@ -349,11 +365,12 @@ export default async function Home({
                   {selectedMessages.map((message) => (
                     <div
                       className={[
-                        message.direction === "OUTBOUND" ? "bubble out" : "bubble in",
+                        message.direction === "INTERNAL" ? "bubble internal" : message.direction === "OUTBOUND" ? "bubble out" : "bubble in",
                         message.status === "FAILED" ? "failed" : "",
                       ].join(" ")}
                       key={message.id}
                     >
+                      {message.direction === "INTERNAL" ? <strong>Nota interna · {message.sender?.name ?? "Equipe"}</strong> : null}
                       {message.body ?? (message.mediaType ? `[${message.mediaType}]` : "[mensagem]")}
                       {message.direction === "OUTBOUND" ? (
                         <small className="deliveryStatus">
@@ -414,6 +431,25 @@ export default async function Home({
                   tags={availableTags}
                   selectedTagIds={selected.tags.map(({ tagId }) => tagId)}
                   canCreateTags={["OWNER", "ADMIN", "SUPERVISOR"].includes(user.role)}
+                />
+                <ConversationCollaboration
+                  conversationId={selected.id}
+                  currentAgentId={selected.assignedAgentId}
+                  canCollaborate={canCollaborateOnConversation(user.role, user.id, selected.assignedAgentId)}
+                  agents={transferCandidates
+                    .filter((agent) => isEligibleTransferTarget({
+                      role: agent.role,
+                      status: agent.status,
+                      maxOpenConversations: agent.maxOpenConversations,
+                      openConversations: agent._count.assignedConversations,
+                    }))
+                    .map((agent) => ({
+                      id: agent.id,
+                      name: agent.name,
+                      agentStatus: agent.agentStatus,
+                      openConversations: agent._count.assignedConversations,
+                      maxOpenConversations: agent.maxOpenConversations,
+                    }))}
                 />
               </>
             ) : null}
