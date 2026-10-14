@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasTrustedOrigin } from "@/lib/http-security";
 import { prisma } from "@/lib/prisma";
 import { publishRealtimeEvent } from "@/lib/realtime";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import {
   MetaApiError,
   getMetaMessageId,
@@ -31,12 +32,20 @@ export async function POST(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const { id } = await context.params;
+  const sendLimit = consumeRateLimit(`message:${user.id}:${id}`, 30, 60_000);
+  if (!sendLimit.allowed) {
+    return NextResponse.json(
+      { error: "message_rate_limited" },
+      { status: 429, headers: { "Retry-After": String(sendLimit.retryAfterSeconds) } },
+    );
+  }
+
   const parsed = messageSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid_message" }, { status: 400 });
   }
 
-  const { id } = await context.params;
   const conversation = await prisma.conversation.findFirst({
     where: { id, organizationId: user.organizationId },
     include: {
