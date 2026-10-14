@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Farmavale Central PostgreSQL backup
+
+[Timer]
+OnCalendar=*-*-* 02:15:00 America/Sao_Paulo
+Persistent=true
+RandomizedDelaySec=300
+Unit=farmavale-backup.service
+
+[Install]
+WantedBy=timers.target
