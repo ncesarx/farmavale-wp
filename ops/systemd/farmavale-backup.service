@@ -1,0 +1,23 @@
+[Unit]
+Description=Farmavale Central PostgreSQL backup
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=ncesarx
+Group=ncesarx
+WorkingDirectory=/home/ncesarx/farmavale-central
+Environment=PROJECT_ROOT=/home/ncesarx/farmavale-central
+Environment=BACKUP_DIR=/var/backups/farmavale-central
+Environment=BACKUP_RETENTION_DAYS=14
+ExecStart=/usr/bin/bash /home/ncesarx/farmavale-central/scripts/backup-database.sh
+ExecStartPost=/usr/bin/bash /home/ncesarx/farmavale-central/scripts/verify-database-backup.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/backups/farmavale-central
+
+[Install]
+WantedBy=multi-user.target

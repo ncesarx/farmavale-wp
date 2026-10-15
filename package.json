@@ -14,7 +14,10 @@
     "db:seed": "tsx prisma/seed.ts",
     "user:create-owner": "tsx prisma/create-owner.ts",
     "push:generate-keys": "tsx scripts/generate-vapid-keys.ts",
-    "alerts:sla": "tsx scripts/check-sla-alerts.ts"
+    "alerts:sla": "tsx scripts/check-sla-alerts.ts",
+    "ops:backup": "bash scripts/backup-database.sh",
+    "ops:backup:verify": "bash scripts/verify-database-backup.sh",
+    "ops:check": "bash scripts/check-production.sh"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

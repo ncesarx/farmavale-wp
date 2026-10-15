@@ -1,0 +1,18 @@
+[Unit]
+Description=Farmavale Central operational check
+After=network-online.target farmavale-backup.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ncesarx
+Group=ncesarx
+Environment=APP_URL=http://127.0.0.1:3006
+Environment=BACKUP_DIR=/var/backups/farmavale-central
+Environment=BACKUP_MAX_AGE_SECONDS=97200
+ExecStart=/usr/bin/bash /home/ncesarx/farmavale-central/scripts/check-production.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=/var/backups/farmavale-central
