@@ -382,6 +382,7 @@ export default async function Home({
                   ))}
                 </div>
                 <MessageComposer
+                  key={selected.id}
                   conversationId={selected.id}
                   quickReplies={quickReplies.map((reply) => ({
                     ...reply,

@@ -175,3 +175,11 @@
 
 /* Colaboração no atendimento */
 .bubble.internal{align-self:center;max-width:78%;background:#26213D;border:1px dashed #71678E;color:#DDD7E8}.bubble.internal strong{display:block;margin-bottom:5px;color:var(--gold);font:700 10px var(--font-nunito)}.collaborationControls{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}.collaborationControls>label,.collaborationControls form label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:10px}.collaborationControls label span{display:grid;grid-template-columns:1fr auto;gap:6px}.collaborationControls select,.collaborationControls textarea{min-width:0;background:#100F1D;border:1px solid var(--border);border-radius:7px;color:#E7E3ED;padding:8px;font:600 10px var(--font-nunito)}.collaborationControls textarea{min-height:70px;resize:vertical}.collaborationControls form{display:grid;gap:7px;margin-top:10px}.collaborationControls button{margin:0}.collaborationFeedback{margin:8px 0 0;color:#35D181;font-size:10px}
+
+/* Assistance keeps the normal composer available during inference. */
+.composerArea { flex-shrink: 0; min-width: 0; }
+.assistPanel { padding: 10px 16px; border-top: 1px solid var(--border, #dde2e6); max-height: 280px; overflow-y: auto; }
+.assistPanel > small { display: block; margin-top: 6px; color: var(--muted, #b7b1c5); }
+.assistPanel p { margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.assistPanel button { padding: 7px 12px; margin: 0 8px 0 0; cursor: pointer; }
+.assistPanel button:disabled { cursor: default; opacity: .6; }

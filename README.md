@@ -52,3 +52,25 @@ sudo systemctl enable --now farmavale-backup.timer farmavale-operations-check.ti
 ```
 
 Execute primeiro `npm run ops:backup` e `npm run ops:backup:verify`. Uma restauração deve ser testada periodicamente em banco isolado; nunca restaure diretamente sobre a produção durante uma verificação.
+
+## IA assistida local (Ollama)
+
+A assistência é opcional e não envia mensagens. Atendentes responsáveis e liderança podem gerar resumo, intenção e sugestão; “Usar como rascunho” preenche apenas um campo vazio. O envio continua manual. As respostas podem conter erros e precisam ser conferidas, especialmente informações comerciais e clínicas.
+
+No ambiente do processo Next.js, configure:
+
+```dotenv
+AI_ASSIST_ENABLED="true"
+OLLAMA_BASE_URL="http://172.30.172.222:11434"
+OLLAMA_MODEL="qwen3:4b-instruct"
+```
+
+Somente o servidor Next.js acessa o Ollama. Restrinja a porta 11434 ao IP do servidor Farmavale e reserve os dois endereços no DHCP. Não publique a porta na Internet. Não use variáveis NEXT_PUBLIC para esta configuração.
+
+São enviados até 12 textos recentes, com até 500 caracteres cada, excluindo notas internas e mensagens com status FAILED ou QUEUED. Emails, telefones e CPF reconhecíveis são substituídos antes do envio; isso não é anonimização completa: outros dados pessoais e de saúde presentes no texto podem permanecer. Nomes e dados cadastrais não são consultados. A auditoria registra modelo e quantidade de mensagens, sem gravar prompt ou resposta. A resposta não é persistida como mensagem.
+
+Uma única geração por processo é permitida, com até três solicitações por usuário/minuto e timeout de 90 segundos. Com múltiplos processos, estes limites não são compartilhados entre processos; dimensione a fila do Ollama antes de escalar. Mudanças de responsável/status e novas mensagens durante a geração invalidam a resposta. O limite efetivo do contexto é 4096, mesmo que o catálogo do modelo anuncie um contexto maior.
+
+Valide primeiro em checkout isolado: npm ci, npm test, npm run lint e npm run build. Não há migração de banco. Na implantação, mantenha um build anterior para reversão e reinicie somente o processo farmavale-central pelo PM2 com --update-env após configurar o ambiente. Em produção, evite gerar o novo build sobre os arquivos .next em uso; use um diretório de release separado conforme o procedimento do servidor.
+
+Para desabilitar, defina AI_ASSIST_ENABLED=false e reinicie apenas o processo Farmavale. O envio normal de mensagens não depende da disponibilidade da IA.
