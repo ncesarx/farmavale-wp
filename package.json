@@ -17,7 +17,9 @@
     "alerts:sla": "tsx scripts/check-sla-alerts.ts",
     "ops:backup": "bash scripts/backup-database.sh",
     "ops:backup:verify": "bash scripts/verify-database-backup.sh",
-    "ops:check": "bash scripts/check-production.sh"
+    "ops:check": "bash scripts/check-production.sh",
+    "ade:process": "tsx scripts/process-ade-welcome.ts",
+    "ade:test:integration": "tsx scripts/test-ade-welcome-integration.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

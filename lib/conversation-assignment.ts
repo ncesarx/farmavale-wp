@@ -1,3 +1,4 @@
+import { isAdeActive } from "@/lib/ade-welcome-policy";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -22,10 +23,12 @@ async function assignConversationWithLock(
 ): Promise<AutoAssignmentResult> {
   const conversation = await tx.conversation.findUnique({
     where: { id: conversationId },
-    select: { assignedAgentId: true },
+    select: { assignedAgentId: true, welcomeStage: true, status: true },
   });
   if (!conversation) throw new Error("Conversation not found during auto assignment");
   if (conversation.assignedAgentId) return "already_assigned";
+  if (!["QUEUED", "OPEN", "PENDING"].includes(conversation.status)) return "queued";
+  if (isAdeActive(conversation.welcomeStage) && process.env.ADE_WELCOME_ENABLED === "true") return "queued";
 
   const agents = await tx.user.findMany({
     where: {
@@ -66,6 +69,7 @@ async function assignConversationWithLock(
     data: {
       assignedAgentId: candidate.id,
       status: "OPEN",
+      welcomeStage: "HUMAN",
     },
   });
   if (claimed.count === 0) return "already_assigned";
@@ -120,6 +124,7 @@ export async function drainQueuedConversations(
           organizationId,
           assignedAgentId: null,
           status: "QUEUED",
+          ...(process.env.ADE_WELCOME_ENABLED === "true" ? { welcomeStage: { notIn: ["NAME", "REASON"] } } : {}),
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: { id: true },

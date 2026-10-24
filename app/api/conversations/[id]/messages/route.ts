@@ -1,3 +1,4 @@
+import { lockAdeOrganization, stopAdeWelcome } from "@/lib/ade-welcome";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
@@ -88,7 +89,10 @@ export async function POST(
     return NextResponse.json({ message: duplicate, duplicate: true });
   }
 
-  const queued = await prisma.message.create({
+  const queued = await prisma.$transaction(async (tx) => {
+    await lockAdeOrganization(tx, user.organizationId);
+    await stopAdeWelcome(tx, conversation.id);
+    return tx.message.create({
     data: {
       conversationId: conversation.id,
       senderId: user.id,
@@ -99,6 +103,7 @@ export async function POST(
       rawPayload: { source: "agent_console" },
     },
     select: { id: true },
+    });
   });
 
   try {

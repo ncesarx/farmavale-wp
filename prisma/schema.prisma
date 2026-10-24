@@ -317,6 +317,12 @@ model Conversation {
   slaDueAt        DateTime?
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
+  welcomeStage    String                   @default("OFF")
+  welcomeName     String?
+  welcomeReason   String?
+  welcomeTurns    Int                      @default(0)
+  welcomeUpdatedAt DateTime?
+  welcomeLastInboundAt DateTime?
   messages        Message[]
   assignments     ConversationAssignment[]
   tags            ConversationTag[]
@@ -324,6 +330,7 @@ model Conversation {
   @@index([organizationId, status, priority])
   @@index([organizationId, assignedAgentId, status])
   @@index([organizationId, lastMessageAt])
+  @@index([welcomeStage, welcomeUpdatedAt])
 }
 
 model Message {
