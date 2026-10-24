@@ -51,3 +51,19 @@ test("rejects concurrent generation and releases the slot after a failure", asyn
   await assert.rejects(generateAssistance(messages, config, (async () => { throw new DOMException("timeout", "TimeoutError"); }) as typeof fetch), { code: "ai_timeout" });
   await assert.rejects(generateAssistance(messages, config, (async () => Response.json({ done: true, done_reason: "length", message: { content: "{}" } })) as typeof fetch), { code: "ai_invalid_response" });
 });
+
+test("replaces operator instructions with a customer-facing question", () => {
+  for (const sugestao of [
+    "Atendente, por favor, revise a mensagem para garantir a correta atribuição do contexto.",
+    "Por favor, aguarde enquanto o atendente verifica a disponibilidade.",
+    "Revise a resposta antes de enviar.",
+  ]) {
+    const result = parseAssistance(JSON.stringify({ resumo: "Teste", intencao: "Não identificada", sugestao }));
+    assert.equal(result.sugestao, "Olá! Poderia nos contar como podemos ajudar?");
+  }
+});
+
+test("preserves a response addressed directly to the customer", () => {
+  const sugestao = "Boa tarde! Vou verificar a disponibilidade para você.";
+  assert.equal(parseAssistance(JSON.stringify({ resumo: "Consulta", intencao: "Disponibilidade", sugestao })).sugestao, sugestao);
+});
