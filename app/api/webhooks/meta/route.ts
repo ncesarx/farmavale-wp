@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { processAdeWelcomeQueue, recoverAdeWelcome } from "@/lib/ade-welcome";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getEnv } from "@/lib/env";
 import { processMetaWebhook } from "@/lib/meta-webhook-handler";
 import { publishRealtimeEvent } from "@/lib/realtime";
 import { verifyMetaSignature } from "@/lib/whatsapp";
+
+export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
@@ -54,6 +57,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    after(async () => {
+      try {
+        await recoverAdeWelcome();
+        await processAdeWelcomeQueue(3);
+      } catch (error) {
+        console.error("ade_queue_processing_failed", { error: error instanceof Error ? error.name : "UnknownError" });
+      }
+    });
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("meta_webhook_processing_failed", {

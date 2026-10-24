@@ -1,3 +1,4 @@
+import { lockAdeOrganization, stopAdeWelcome } from "@/lib/ade-welcome";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
@@ -54,6 +55,8 @@ export async function POST(
   }
 
   await prisma.$transaction(async (tx) => {
+    await lockAdeOrganization(tx, user.organizationId);
+    await stopAdeWelcome(tx, id);
     await tx.conversationAssignment.updateMany({
       where: { conversationId: id, endedAt: null },
       data: { endedAt: new Date() },

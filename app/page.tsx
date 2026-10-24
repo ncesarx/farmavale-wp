@@ -1,3 +1,4 @@
+import { isAdeActive } from "@/lib/ade-welcome-policy";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -199,6 +200,7 @@ export default async function Home({
             mediaType: true,
             status: true,
             createdAt: true,
+            rawPayload: true,
             sender: { select: { name: true } },
           },
         })
@@ -360,7 +362,7 @@ export default async function Home({
                 </div>
                 <div className="messages">
                   <div className="system">
-                    {STATUS_LABEL[selected.status]} · última atualização {formatTime(selected.updatedAt)}
+                    {isAdeActive(selected.welcomeStage) ? "Acolhimento com a Ade · a equipe pode assumir pelo painel de transferência" : STATUS_LABEL[selected.status]} · última atualização {formatTime(selected.updatedAt)}
                   </div>
                   {selectedMessages.map((message) => (
                     <div
@@ -371,6 +373,7 @@ export default async function Home({
                       key={message.id}
                     >
                       {message.direction === "INTERNAL" ? <strong>Nota interna · {message.sender?.name ?? "Equipe"}</strong> : null}
+                      {message.rawPayload && typeof message.rawPayload === "object" && !Array.isArray(message.rawPayload) && message.rawPayload.source === "ade_welcome" && message.direction === "OUTBOUND" ? <strong>Ade · acolhimento automático<br /></strong> : null}
                       {message.body ?? (message.mediaType ? `[${message.mediaType}]` : "[mensagem]")}
                       {message.direction === "OUTBOUND" ? (
                         <small className="deliveryStatus">
@@ -418,6 +421,7 @@ export default async function Home({
                 <hr />
                 <h4>Informações do cliente</h4>
                 <dl>
+                  {selected.welcomeName ? <><dt>Nome preferido</dt><dd>{selected.welcomeName}</dd></> : null}
                   <dt>Telefone</dt><dd>{maskedPhone(selected.contact.phoneE164)}</dd>
                   <dt>E-mail</dt><dd>{selected.contact.email ?? "Não informado"}</dd>
                   <dt>Protocolo</dt><dd>{selected.protocol}</dd>

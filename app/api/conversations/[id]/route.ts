@@ -1,3 +1,4 @@
+import { lockAdeOrganization, stopAdeWelcome } from "@/lib/ade-welcome";
 import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
@@ -84,6 +85,8 @@ export async function PATCH(
   }
 
   const updated = await prisma.$transaction(async (tx) => {
+    await lockAdeOrganization(tx, user.organizationId);
+    if (parsed.data.status) await stopAdeWelcome(tx, id);
     if (shouldEndAssignment) {
       await tx.conversationAssignment.updateMany({
         where: { conversationId: id, endedAt: null },

@@ -1,0 +1,19 @@
+[Unit]
+Description=Farmavale Ade welcome delivery and recovery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ncesarx
+Group=ncesarx
+WorkingDirectory=/home/ncesarx/farmavale-central-release-24
+ExecStart=/usr/bin/npm run ade:process
+TimeoutStartSec=360
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

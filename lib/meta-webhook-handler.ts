@@ -1,3 +1,4 @@
+import { advanceAdeWelcome, lockAdeOrganization } from "@/lib/ade-welcome";
 import { createHash } from "node:crypto";
 import { autoAssignConversation } from "@/lib/conversation-assignment";
 import { applyInboundAutomationRules } from "@/lib/automation-rules";
@@ -64,6 +65,8 @@ async function persistInbound(message: MetaInboundMessage) {
       });
       if (!organization) throw new Error("Farmavale organization is not configured");
 
+      await lockAdeOrganization(tx, organization.id);
+
       const channel = await tx.channel.upsert({
         where: {
           organizationId_type_externalId: {
@@ -124,6 +127,7 @@ async function persistInbound(message: MetaInboundMessage) {
         select: { id: true, status: true, assignedAgentId: true },
       });
 
+      const isNew = !conversation;
       if (!conversation) {
         conversation = await tx.conversation.create({
           data: {
@@ -189,8 +193,15 @@ async function persistInbound(message: MetaInboundMessage) {
         },
       });
 
-      const automated = await applyInboundAutomationRules(tx, organization.id, conversation.id, message.body);
-      const assignment = automated.assigned
+      const heldByAde = await advanceAdeWelcome(tx, {
+        conversationId: conversation.id, organizationId: organization.id,
+        phoneNumberId: message.phoneNumberId, phone, externalId: message.id,
+        body: message.body, mediaType: message.type === "text" ? null : message.type,
+        timestamp: message.timestamp, isNew,
+      });
+      const automated = heldByAde ? { assigned: false }
+        : await applyInboundAutomationRules(tx, organization.id, conversation.id, message.body);
+      const assignment = heldByAde ? "queued" as const : automated.assigned
         ? "assigned" as const
         : await autoAssignConversation(tx, organization.id, conversation.id);
       const updated = await tx.conversation.findUniqueOrThrow({
@@ -255,7 +266,7 @@ export async function processMetaWebhook(payload: unknown): Promise<MetaProcessi
     leftQueued: 0,
   };
 
-  for (const message of events.messages) {
+  for (const message of [...events.messages].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())) {
     const persisted = await persistInbound(message);
     result[persisted.outcome === "created" ? "created" : "duplicates"] += 1;
     if (persisted.assignment === "assigned") result.autoAssigned += 1;
